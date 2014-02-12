@@ -1,79 +1,150 @@
 <!DOCTYPE html>
 <html>
-
   <head>
-    <meta charset='utf-8' />
-    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
-    <meta name="description" content="Lgbluetooth : Simple, block-based, lightweight library over CoreBluetooth." />
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
 
-    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
 
-    <title>Lgbluetooth</title>
+    <title>Lgbluetooth by DavidSahakyan</title>
   </head>
 
   <body>
 
-    <!-- HEADER -->
-    <div id="header_wrap" class="outer">
-        <header class="inner">
-          <a id="forkme_banner" href="https://github.com/DavidSahakyan/LGBluetooth">View on GitHub</a>
+    <header>
+      <div class="container">
+        <h1>Lgbluetooth</h1>
+        <h2>Simple, block-based, lightweight library over CoreBluetooth.</h2>
 
-          <h1 id="project_title">Lgbluetooth</h1>
-          <h2 id="project_tagline">Simple, block-based, lightweight library over CoreBluetooth.</h2>
+        <section id="downloads">
+          <a href="https://github.com/DavidSahakyan/LGBluetooth/zipball/master" class="btn">Download as .zip</a>
+          <a href="https://github.com/DavidSahakyan/LGBluetooth/tarball/master" class="btn">Download as .tar.gz</a>
+          <a href="https://github.com/DavidSahakyan/LGBluetooth" class="btn btn-github"><span class="icon"></span>View on GitHub</a>
+        </section>
+      </div>
+    </header>
 
-            <section id="downloads">
-              <a class="zip_download_link" href="https://github.com/DavidSahakyan/LGBluetooth/zipball/master">Download this project as a .zip file</a>
-              <a class="tar_download_link" href="https://github.com/DavidSahakyan/LGBluetooth/tarball/master">Download this project as a tar.gz file</a>
-            </section>
-        </header>
-    </div>
+    <div class="container">
+      <section id="main_content">
+        <h1>
+<a name="lgbluetooth" class="anchor" href="#lgbluetooth"><span class="octicon octicon-link"></span></a>LGBluetooth</h1>
 
-    <!-- MAIN CONTENT -->
-    <div id="main_content_wrap" class="outer">
-      <section id="main_content" class="inner">
-        <h3>
-<a name="welcome-to-github-pages" class="anchor" href="#welcome-to-github-pages"><span class="octicon octicon-link"></span></a>Welcome to GitHub Pages.</h3>
+<p>Simple, block-based, lightweight library over CoreBluetooth.</p>
 
-<p>This automatic page generator is the easiest way to create beautiful pages for all of your projects. Author your page content here using GitHub Flavored Markdown, select a template crafted by a designer, and publish. After your page is generated, you can check out the new branch:</p>
+<h2>
+<a name="steps-to-start-using" class="anchor" href="#steps-to-start-using"><span class="octicon octicon-link"></span></a>Steps to start using</h2>
 
-<pre><code>$ cd your_repo_root/repo_name
-$ git fetch origin
-$ git checkout gh-pages
-</code></pre>
+<ol>
+<li><p>Drag and Drop it into your project</p></li>
+<li><p>Import "LGBluetooth.h"</p></li>
+<li><p>Star it on github! (It really makes sense)</p></li>
+<li><p>You are ready to go!</p></li>
+</ol><h2>
+<a name="usage" class="anchor" href="#usage"><span class="octicon octicon-link"></span></a>Usage</h2>
 
-<p>If you're using the GitHub for Mac, simply sync your repository and you'll see the new branch.</p>
+<p>For example we have a peripheral which has "5ec0" service, with 3 characteristics
+<img src="https://raw2.github.com/DavidSahakyan/LGBluetooth/master/Screenshots/1.PNG" width="320" height="480"><br></p>
 
-<h3>
-<a name="designer-templates" class="anchor" href="#designer-templates"><span class="octicon octicon-link"></span></a>Designer Templates</h3>
+<ul>
+<li>"cef9" characteristic is writable</li>
+<li>"f045" characteristic is readable</li>
+<li>"8fdb" characteristic is readable</li>
+</ul><pre>
+- (IBAction)testPressed:(UIButton *)sender
+{
+    [[LGCentralManager sharedInstance] scanForPeripheralsByInterval:4
+                                                         completion:^(NSArray *peripherals)
+     {
+         if (peripherals.count) {
+             [self testPeripheral:peripherals[0]];
+         }
+     }];
+}
 
-<p>We've crafted some handsome templates for you to use. Go ahead and continue to layouts to browse through them. You can easily go back to edit your page before publishing. After publishing your page, you can revisit the page generator and switch to another theme. Your Page content will be preserved if it remained markdown format.</p>
+- (void)testPeripheral:(LGPeripheral *)peripheral
+{
+    [peripheral connectWithCompletion:^(NSError *error) {
+        [peripheral discoverServicesWithCompletion:^(NSArray *services, NSError *error) {
+            for (LGService *service in services) {
+                if ([service.UUIDString isEqualToString:@"5ec0"]) {
+                    [service discoverCharacteristicsWithCompletion:^(NSArray *characteristics, NSError *error) {
+                        __block int i = 0;
+                        for (LGCharacteristic *charact in characteristics) {
+                            if ([charact.UUIDString isEqualToString:@"cef9"]) {
+                                [charact writeByte:0xFF completion:^(NSError *error) {
+                                    if (++i == 3) {
+                                        [peripheral disconnectWithCompletion:nil];
+                                    }
+                                }];
+                            } else {
+                                [charact readValueWithBlock:^(NSData *data, NSError *error) {
+                                    if (++i == 3) {
+                                        [peripheral disconnectWithCompletion:nil];
+                                    }
+                                }];
+                            }
+                        }
+                    }];
+                }
+            }
+        }];
+    }];
+}
+</pre>
 
-<h3>
-<a name="rather-drive-stick" class="anchor" href="#rather-drive-stick"><span class="octicon octicon-link"></span></a>Rather Drive Stick?</h3>
+<p>After running code we can see the result.</p>
 
-<p>If you prefer to not use the automatic generator, push a branch named <code>gh-pages</code> to your repository to create a page manually. In addition to supporting regular HTML content, GitHub Pages support Jekyll, a simple, blog aware static site generator written by our own Tom Preston-Werner. Jekyll makes it easy to create site-wide headers and footers without having to copy them across every page. It also offers intelligent blog support and other advanced templating features.</p>
+<p><img src="https://raw2.github.com/DavidSahakyan/LGBluetooth/master/Screenshots/5.PNG" width="320" height="480"><br></p>
 
-<h3>
-<a name="authors-and-contributors" class="anchor" href="#authors-and-contributors"><span class="octicon octicon-link"></span></a>Authors and Contributors</h3>
+<p>In this example I'm scanning peripherals for 4 seconds.
+After which I am passing first peripheral to test method.</p>
 
-<p>You can <a href="https://github.com/blog/821" class="user-mention">@mention</a> a GitHub username to generate a link to their profile. The resulting <code>&lt;a&gt;</code> element will link to the contributor's GitHub Profile. For example: In 2007, Chris Wanstrath (<a href="https://github.com/defunkt" class="user-mention">@defunkt</a>), PJ Hyett (<a href="https://github.com/pjhyett" class="user-mention">@pjhyett</a>), and Tom Preston-Werner (<a href="https://github.com/mojombo" class="user-mention">@mojombo</a>) founded GitHub.</p>
+<p>Test method connects to peripheral, discoveres services, discoveres characteristics of "5ec0" service.
+Aftter which reads "f045", "8fdb", and writes 0xFF to "cef9" and disconnects from peripheral.</p>
 
-<h3>
-<a name="support-or-contact" class="anchor" href="#support-or-contact"><span class="octicon octicon-link"></span></a>Support or Contact</h3>
+<p>Here is the log from console </p>
 
-<p>Having trouble with Pages? Check out the documentation at <a href="http://help.github.com/pages">http://help.github.com/pages</a> or contact <a href="mailto:support@github.com">support@github.com</a> and we’ll help you sort it out.</p>
+<pre>
+Connection with error - (null)
+Service discovered - Battery
+Service discovered - Current Time
+Service discovered - Unknown (5ec0)
+Characteristic discovered - Unknown (cef9)
+Characteristic discovered - Unknown (f045)
+Characteristic discovered - Unknown (8fdb)
+Characteristic - Unknown (cef9) wrote with error - (null)
+Characteristic - Unknown (f045) value - 1234567890 error - 
+Characteristic - Unknown (8fdb) value - 11111111111 error - (null)
+Disconnect with error - (null)
+</pre>
+
+<h2>
+<a name="reasons-of-using-lgbluetooth" class="anchor" href="#reasons-of-using-lgbluetooth"><span class="octicon octicon-link"></span></a>Reasons of using LGBluetooth</h2>
+
+<p>As we know CoreBluetooth is very hard to use - 
+The methods of objects in Core bluetooth are messy</p>
+
+<p>For example connectPeripheral:options: is written in CBCentralManager,
+discoverCharacteristics:forService is written in Peripheral,
+writeValue:forCharacteristic:type, readValueForCharacteristic are also in Peripheral</p>
+
+<p>This messy code makes CoreBluetooth development really painfull.
+For example if you need to read characteristic value, you need to call "connect" on central object, wait for Central delegate callback,
+After that call "discover services", wait peripheral delegate callback, "discover characteristic" which you planned and wait for delegate callback, "readValue" and again wait for delegate callback.
+What will happen if your program will make 2 connections at once?
+Handling such cases makes messy code, and raises hundred of bugs.</p>
+
+<p>Don't worry, now you can forgot about that hell - LGBluetooth uses blocks for callbacks, you can start using modern code and hierarchical calls.</p>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>LICENSE</h2>
+
+<p>LGBluetooth is under MIT License (see LICENSE file)</p>
       </section>
     </div>
 
-    <!-- FOOTER  -->
-    <div id="footer_wrap" class="outer">
-      <footer class="inner">
-        <p class="copyright">Lgbluetooth maintained by <a href="https://github.com/DavidSahakyan">DavidSahakyan</a></p>
-        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
-      </footer>
-    </div>
-
     
-
   </body>
 </html>
