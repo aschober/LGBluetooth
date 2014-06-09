@@ -45,7 +45,12 @@
 
 - (NSString *)UUIDString
 {
-    return [self.cbService.UUID representativeString];
+    // iOS 7.1 check
+    if([CBUUID instancesRespondToSelector:@selector(UUIDString)]){
+        return [self.cbService.UUID UUIDString];
+    } else {
+        return [self.cbService.UUID representativeString];
+    }
 }
 
 /*----------------------------------------------------*/

@@ -20,6 +20,8 @@
 // IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 // CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+#define LG_BLE_SILENCE        1
+
 #ifndef LG_BLE_SILENCE
 #ifdef DEBUG
 #define LG_ENABLE_BLE_LOGGING 1
@@ -50,7 +52,22 @@ typedef void(^LGUtilsDiscoverCharacterisitcCallback)(LGCharacteristic *character
 /**
  * Error domain for Write errors
  */
+extern NSString * const kLGUtilsCentralManagerErrorDomain;
+
+/**
+ * Error domain for Write errors
+ */
 extern NSString * const kLGUtilsWriteErrorDomain;
+
+/**
+ * Error domain for Write errors
+ */
+extern NSString * const kLGUtilsReadErrorDomain;
+
+/**
+ * Error domain for Write errors
+ */
+extern NSString * const kLGUtilsSubscribeErrorDomain;
 
 /**
  * Global error Message key
@@ -58,6 +75,12 @@ extern NSString * const kLGUtilsWriteErrorDomain;
 extern NSString * const kLGErrorMessageKey;
 
 #pragma mark - Error Codes -
+
+/**
+ * Error code for starting central manager
+ * Central Manager did not enter PoweredOn state
+ */
+extern const NSInteger kLGUtilsCentralManagerStartErrorCode;
 
 /**
  * Error code for write operation

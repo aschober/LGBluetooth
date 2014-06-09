@@ -65,12 +65,22 @@ NSString * const kConnectionMissingErrorMessage = @"BLE Device is not connected"
 
 - (BOOL)isConnected
 {
-    return (self.cbPeripheral.state == CBPeripheralStateConnected);
+    // iOS 7 check
+    if([CBPeripheral instancesRespondToSelector:@selector(state)]){
+        return (self.cbPeripheral.state == CBPeripheralStateConnected);
+    } else {
+        return self.cbPeripheral.isConnected;
+    }
 }
 
 - (NSString *)UUIDString
 {
-    return [self.cbPeripheral.identifier UUIDString];
+    // iOS 7 check
+    if([CBPeripheral instancesRespondToSelector:@selector(identifier)]){
+        return [self.cbPeripheral.identifier UUIDString];
+    } else {
+        return CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, self.cbPeripheral.UUID));
+    }
 }
 
 - (NSString *)name
@@ -300,6 +310,31 @@ NSString * const kConnectionMissingErrorMessage = @"BLE Device is not connected"
         _cbPeripheral.delegate = self;
     }
     return self;
+}
+
+- (BOOL)isEqual:(id)other {
+    if (other == self)
+        return YES;
+    
+    if (!other || ![other isKindOfClass:[self class]])
+        return NO;
+    
+    return [self isEqualToPeripheral:other];
+}
+
+- (BOOL)isEqualToPeripheral:(LGPeripheral *)aPeripheral {
+    if(!aPeripheral)
+        return NO;
+    
+    if (self == aPeripheral)
+        return YES;
+    
+    return [[self cbPeripheral] isEqual:[aPeripheral cbPeripheral]];
+}
+
+-(void)setCbPeripheral:(CBPeripheral *)cbPeripheral
+{
+    _cbPeripheral = cbPeripheral;
 }
 
 @end
