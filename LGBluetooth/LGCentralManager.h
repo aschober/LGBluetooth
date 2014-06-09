@@ -25,7 +25,9 @@
 @class LGPeripheral;
 @class CBCentralManager;
 
-typedef void (^LGCentralManagerDiscoverPeripheralsCallback) (NSArray *peripherals);
+typedef void (^LGCentralManagerStartCallback) (NSError *error);
+typedef void (^LGCentralManagerDiscoverPeripheralsAfterIntervalCallback) (NSArray *peripherals);
+typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peripheral);
 
 /**
  * Wrapper class which implments common central role
@@ -73,6 +75,11 @@ typedef void (^LGCentralManagerDiscoverPeripheralsCallback) (NSArray *peripheral
 + (NSSet *)keyPathsForValuesAffectingCentralNotReadyReason;
 
 /**
+ * Start central manager. Returns error if not CBCentralManagerStatePoweredOn
+ */
+- (void)startCentralManagerCompletion:(LGCentralManagerStartCallback)aCallback;
+
+/**
  * Scans for nearby peripherals
  * and fills the - NSArray *peripherals
  */
@@ -90,6 +97,19 @@ typedef void (^LGCentralManagerDiscoverPeripheralsCallback) (NSArray *peripheral
                                options:(NSDictionary *)options;
 
 /**
+ * Makes scan for peripherals with criterias,
+ * fills - NSArray *peripherals
+ * @param serviceUUIDs An array of CBUUID objects that the app is interested in.
+ * In this case, each CBUUID object represents the UUID of a service that
+ * a peripheral is advertising.
+ * @param options An optional dictionary specifying options to customize the scan.
+ * @param aCallback block will be called when a new device is discovered
+ */
+- (void)scanForPeripheralsWithServices:(NSArray *)serviceUUIDs
+                               options:(NSDictionary *)options
+                      discoveredDevice:(LGCentralManagerDiscoveredPeripheralCallback)aCallback;
+
+/**
  * Scans for nearby peripherals
  * and fills the - NSArray *peripherals.
  * Scan will be stoped after input interaval.
@@ -98,7 +118,7 @@ typedef void (^LGCentralManagerDiscoverPeripheralsCallback) (NSArray *peripheral
  * <i>aScanInterval</i> with nearby peripherals
  */
 - (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
-                          completion:(LGCentralManagerDiscoverPeripheralsCallback)aCallback;
+                          completion:(LGCentralManagerDiscoverPeripheralsAfterIntervalCallback)aCallback;
 
 /**
  * Scans for nearby peripherals with criterias,
@@ -115,7 +135,7 @@ typedef void (^LGCentralManagerDiscoverPeripheralsCallback) (NSArray *peripheral
 - (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
                             services:(NSArray *)serviceUUIDs
                              options:(NSDictionary *)options
-                          completion:(LGCentralManagerDiscoverPeripheralsCallback)aCallback;
+                          completion:(LGCentralManagerDiscoverPeripheralsAfterIntervalCallback)aCallback;
 
 /**
  * Stops ongoing scan proccess
@@ -124,7 +144,7 @@ typedef void (^LGCentralManagerDiscoverPeripheralsCallback) (NSArray *peripheral
 
 /**
  * Returns a list of known peripherals by their identifiers.
- * @param identifiers A list of peripheral identifiers (represented by NSUUID objects)
+ * @param identifiers A list of peripheral identifiers (represented by NSString objects)
  * from which LGperipheral objects can be retrieved.
  * @return A list of peripherals that the central manager is able to match to the provided identifiers.
  */

@@ -48,9 +48,19 @@
 @property (strong, nonatomic) NSMutableArray *scannedPeripherals;
 
 /**
+ * Completion block for starting central manager
+ */
+@property (copy, nonatomic) LGCentralManagerStartCallback startBlock;
+
+/**
+ * Completion block for peripheral scanning after interval
+ */
+@property (copy, nonatomic) LGCentralManagerDiscoverPeripheralsAfterIntervalCallback scanBlock;
+
+/**
  * Completion block for peripheral scanning
  */
-@property (copy, nonatomic) LGCentralManagerDiscoverPeripheralsCallback scanBlock;
+@property (copy, nonatomic) LGCentralManagerDiscoveredPeripheralCallback discoverBlock;
 
 /**
  * CBCentralManager's state updated by centralManagerDidUpdateState:
@@ -103,6 +113,18 @@
 #pragma mark - Public Methods -
 /*----------------------------------------------------*/
 
+- (void)startCentralManagerCompletion:(LGCentralManagerStartCallback)aCallback
+{
+    if(_manager && _manager.state == CBCentralManagerStatePoweredOn) {
+        aCallback(nil);
+        return;
+    }
+    
+    self.startBlock = aCallback;
+    _manager = [[CBCentralManager alloc] initWithDelegate:self queue:self.centralQueue];
+    _cbCentralManagerState = _manager.state;
+}
+
 - (void)scanForPeripherals
 {
     [self scanForPeripheralsWithServices:nil
@@ -121,6 +143,7 @@
         self.scanBlock(self.peripherals);
     }
     self.scanBlock = nil;
+    self.discoverBlock = nil;
 }
 
 - (void)scanForPeripheralsWithServices:(NSArray *)serviceUUIDs
@@ -132,8 +155,19 @@
                                          options:options];
 }
 
+- (void)scanForPeripheralsWithServices:(NSArray *)serviceUUIDs
+                               options:(NSDictionary *)options
+                      discoveredDevice:(LGCentralManagerDiscoveredPeripheralCallback)aCallback
+{
+    self.discoverBlock = aCallback;
+    [self.scannedPeripherals removeAllObjects];
+    self.scanning = YES;
+	[self.manager scanForPeripheralsWithServices:serviceUUIDs
+                                         options:options];
+}
+
 - (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
-                          completion:(LGCentralManagerDiscoverPeripheralsCallback)aCallback
+                          completion:(LGCentralManagerDiscoverPeripheralsAfterIntervalCallback)aCallback
 {
     [self scanForPeripheralsByInterval:aScanInterval
                               services:nil
@@ -144,7 +178,7 @@
 - (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
                             services:(NSArray *)serviceUUIDs
                              options:(NSDictionary *)options
-                          completion:(LGCentralManagerDiscoverPeripheralsCallback)aCallback
+                          completion:(LGCentralManagerDiscoverPeripheralsAfterIntervalCallback)aCallback
 {
     self.scanBlock = aCallback;
     [self scanForPeripheralsWithServices:serviceUUIDs
@@ -159,7 +193,18 @@
 
 - (NSArray *)retrievePeripheralsWithIdentifiers:(NSArray *)identifiers
 {
-    return [self wrappersByPeripherals:[self.manager retrievePeripheralsWithIdentifiers:identifiers]];
+    // iOS7 Check
+    if([CBCentralManager instancesRespondToSelector:@selector(retrievePeripheralsWithIdentifiers:)]){
+        // translate array of nsstring identifiers to NSUUID identifiers
+        NSMutableArray *nsuuidIdentifiers = [NSMutableArray arrayWithCapacity:identifiers.count];
+        for(NSString *stringIdentifier in identifiers) {
+            NSUUID *uuid = [[NSUUID alloc] initWithUUIDString:stringIdentifier];
+            [nsuuidIdentifiers addObject:uuid];
+        }
+        return [self wrappersByPeripherals:[self.manager retrievePeripheralsWithIdentifiers:nsuuidIdentifiers]];
+    } else {
+        return nil;
+    }
 }
 
 - (NSArray *)retrieveConnectedPeripheralsWithServices:(NSArray *)serviceUUIDS
@@ -253,12 +298,26 @@
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
     self.cbCentralManagerState = central.state;
-    NSString *message = [self stateMessage];
-    if (message) {
-        dispatch_async(dispatch_get_main_queue(), ^{
+    dispatch_async(dispatch_get_main_queue(), ^{
+        if(self.startBlock) {
+            if(self.manager.state == CBCentralManagerStatePoweredOn) {
+                self.startBlock(nil);
+            }
+            else {
+                // error starting Central Manager
+                NSError *error = [NSError errorWithDomain:kLGUtilsCentralManagerErrorDomain
+                                                     code:kLGUtilsCentralManagerStartErrorCode
+                                                 userInfo:@{kLGErrorMessageKey : [self stateMessage]}];
+                self.startBlock(error);
+            }
+            self.startBlock = nil;
+        }
+        
+        NSString *message = [self stateMessage];
+        if (message) {
             LGLogError(@"%@", message);
-        });
-    }
+        }
+    });
 }
 
 - (void)centralManager:(CBCentralManager *)central
@@ -281,6 +340,9 @@
                                                      selector:@selector(stopScanForPeripherals)
                                                        object:nil];
             [self stopScanForPeripherals];
+        }
+        if(self.discoverBlock) {
+            self.discoverBlock(lgPeripheral);
         }
     });
 }
@@ -307,8 +369,6 @@ static LGCentralManager *sharedInstance = nil;
 	self = [super init];
 	if (self) {
         _centralQueue = dispatch_queue_create("com.LGBluetooth.LGCentralQueue", DISPATCH_QUEUE_SERIAL);
-        _manager      = [[CBCentralManager alloc] initWithDelegate:self queue:self.centralQueue];
-        _cbCentralManagerState = _manager.state;
         _scannedPeripherals = [NSMutableArray new];
         _peripheralsCountToStop = NSUIntegerMax;
 	}

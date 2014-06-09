@@ -45,7 +45,7 @@
             default:[outputString appendFormat:@"%02x", uuidBytes[currentByteIndex]];
         }
     }
-    return outputString;
+    return [outputString uppercaseString];
 }
 
 @end

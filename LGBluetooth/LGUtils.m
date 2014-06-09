@@ -30,6 +30,11 @@
 #import "LGBluetooth.h"
 
 /**
+ * Error domain for Central Manager errors
+ */
+NSString * const kLGUtilsCentralManagerErrorDomain = @"LGUtilsCentralManagerErrorDomain";
+
+/**
  * Error domain for Write errors
  */
 NSString * const kLGUtilsWriteErrorDomain = @"LGUtilsWriteErrorDomain";
@@ -49,6 +54,12 @@ NSString * const kLGUtilsDiscoverErrorDomain = @"LGUtilsDiscoverErrorDomain";
  * Global key for providing errors of LGBluetooth
  */
 NSString * const kLGErrorMessageKey = @"msg";
+
+/**
+ * Error code for starting central manager
+ * Central manager did not enter PoweredOn state
+ */
+const NSInteger kLGUtilsCentralManagerStartErrorCode = 400;
 
 /**
  * Error code for write operation
@@ -72,7 +83,7 @@ NSString * const kLGUtilsMissingServiceErrorMessage = @"Provided service UUID do
  * Error message for write operation
  * Characteristic was not found on peripheral
  */
-NSString * const kLGUtilsMissingCharacteristicErrorMessage = @"Provided characteristic doesn't exist in provided service";;
+NSString * const kLGUtilsMissingCharacteristicErrorMessage = @"Provided characteristic doesn't exist in provided service";
 
 /**
  * Timeout of connection to peripheral
