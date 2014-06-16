@@ -26,8 +26,8 @@
 @class CBCentralManager;
 
 typedef void (^LGCentralManagerStartCallback) (NSError *error);
-typedef void (^LGCentralManagerDiscoverPeripheralsAfterIntervalCallback) (NSArray *peripherals);
-typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peripheral);
+typedef void (^LGCentralManagerDiscoverPeripheralsAfterIntervalCallback) (NSArray *peripherals, NSError *error);
+typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peripheral, NSError *error);
 
 /**
  * Wrapper class which implments common central role

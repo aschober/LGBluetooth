@@ -140,7 +140,7 @@
                                              selector:@selector(stopScanForPeripherals)
                                                object:nil];
     if (self.scanBlock) {
-        self.scanBlock(self.peripherals);
+        self.scanBlock(self.peripherals, nil);
     }
     self.scanBlock = nil;
     self.discoverBlock = nil;
@@ -149,6 +149,17 @@
 - (void)scanForPeripheralsWithServices:(NSArray *)serviceUUIDs
                                options:(NSDictionary *)options
 {
+    if(self.manager.state != CBCentralManagerStatePoweredOn) {
+        LGLog(@"Error scanning for peripherals! CBCentralManager not PoweredOn");
+        if(self.scanBlock) {
+            NSError *error = [NSError errorWithDomain:kLGUtilsCentralManagerErrorDomain
+                                                 code:kLGUtilsCentralManagerStartErrorCode
+                                             userInfo:@{kLGErrorMessageKey : [self stateMessage]}];
+            self.scanBlock(nil, error);
+            self.scanBlock = nil;
+        }
+    }
+    
     [self.scannedPeripherals removeAllObjects];
     self.scanning = YES;
 	[self.manager scanForPeripheralsWithServices:serviceUUIDs
@@ -160,6 +171,18 @@
                       discoveredDevice:(LGCentralManagerDiscoveredPeripheralCallback)aCallback
 {
     self.discoverBlock = aCallback;
+
+    if(self.manager.state != CBCentralManagerStatePoweredOn) {
+        LGLog(@"Error scanning for peripherals! CBCentralManager not PoweredOn");
+        if(self.scanBlock) {
+            NSError *error = [NSError errorWithDomain:kLGUtilsCentralManagerErrorDomain
+                                                 code:kLGUtilsCentralManagerStartErrorCode
+                                             userInfo:@{kLGErrorMessageKey : [self stateMessage]}];
+            self.discoverBlock(nil, error);
+            self.discoverBlock = nil;
+        }
+    }
+
     [self.scannedPeripherals removeAllObjects];
     self.scanning = YES;
 	[self.manager scanForPeripheralsWithServices:serviceUUIDs
@@ -342,7 +365,7 @@
             [self stopScanForPeripherals];
         }
         if(self.discoverBlock) {
-            self.discoverBlock(lgPeripheral);
+            self.discoverBlock(lgPeripheral, nil);
         }
     });
 }
