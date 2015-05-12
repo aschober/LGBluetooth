@@ -121,7 +121,10 @@
     }
     
     self.startBlock = aCallback;
-    _manager = [[CBCentralManager alloc] initWithDelegate:self queue:self.centralQueue];
+    _manager = [[CBCentralManager alloc] initWithDelegate:self
+                                                    queue:self.centralQueue
+                                                  options:@{CBCentralManagerOptionRestoreIdentifierKey:@"centralManagerIdentifier",
+                                                            CBCentralManagerOptionShowPowerAlertKey:[NSNumber numberWithBool:YES]}];
     _cbCentralManagerState = _manager.state;
 }
 
