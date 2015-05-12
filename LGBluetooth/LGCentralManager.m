@@ -321,8 +321,22 @@
     });
 }
 
+- (void)centralManager:(CBCentralManager *)central willRestoreState:(NSDictionary *)state {
+    LGLog(@"centralManager:willRestoreState:");
+    
+    NSArray *peripherals = state[CBCentralManagerRestoredStatePeripheralsKey];
+    
+    //TODO: test restoring peripherals to see what state they are in...
+    for(CBPeripheral *peripheral in peripherals) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            [[self wrapperByPeripheral:peripheral] handleConnectionWithError:nil];
+        });
+    }
+}
+
 - (void)centralManagerDidUpdateState:(CBCentralManager *)central
 {
+    LGLog(@"centralManagerDidUpdateState:");
     self.cbCentralManagerState = central.state;
     dispatch_async(dispatch_get_main_queue(), ^{
         if(self.startBlock) {
