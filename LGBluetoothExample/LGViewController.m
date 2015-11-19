@@ -16,7 +16,7 @@
 {
     // Scaning 4 seconds for peripherals
     [[LGCentralManager sharedInstance] scanForPeripheralsByInterval:4
-                                                         completion:^(NSArray *peripherals)
+                                                         completion:^(NSArray *peripherals, NSError *error)
      {
          // If we found any peripherals sending to test
          if (peripherals.count) {

@@ -1,7 +1,7 @@
 // The MIT License (MIT)
 //
 // Created by : l0gg3r
-// Copyright (c) 2014 SocialObjects Software. All rights reserved.
+// Copyright (c) 2014 l0gg3r. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -61,6 +61,11 @@
  * Completion block for peripheral scanning
  */
 @property (copy, nonatomic) LGCentralManagerDiscoveredPeripheralCallback discoverBlock;
+
+/**
+ * Completion block for peripheral incremental scanning
+ */
+@property (copy, nonatomic) LGCentralManagerDiscoverPeripheralsChangesCallback changesBlock;
 
 /**
  * CBCentralManager's state updated by centralManagerDidUpdateState:
@@ -128,6 +133,12 @@
     _cbCentralManagerState = _manager.state;
 }
 
+- (void)scanForPeripheralsWithChanges:(LGCentralManagerDiscoverPeripheralsChangesCallback)aChangesCallback
+{
+    self.changesBlock = aChangesCallback;
+    [self scanForPeripherals];
+}
+
 - (void)scanForPeripherals
 {
     [self scanForPeripheralsWithServices:nil
@@ -146,6 +157,7 @@
         self.scanBlock(self.peripherals, nil);
     }
     self.scanBlock = nil;
+	self.changesBlock = nil;
     self.discoverBlock = nil;
 }
 
@@ -190,6 +202,15 @@
     self.scanning = YES;
 	[self.manager scanForPeripheralsWithServices:serviceUUIDs
                                          options:options];
+}
+
+- (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
+                             changes:(LGCentralManagerDiscoverPeripheralsChangesCallback)aChangesCallback
+                          completion:(LGCentralManagerDiscoverPeripheralsAfterIntervalCallback)aCallback
+{
+    self.changesBlock = aChangesCallback;
+    [self scanForPeripheralsByInterval:aScanInterval
+                            completion:aCallback];
 }
 
 - (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
@@ -374,6 +395,10 @@
             lgPeripheral.RSSI = (lgPeripheral.RSSI + [RSSI integerValue]) / 2;
         }
         lgPeripheral.advertisingData = advertisementData;
+        
+        if (self.changesBlock != nil) {
+            self.changesBlock(lgPeripheral);
+        }
         
         if ([self.scannedPeripherals count] >= self.peripheralsCountToStop) {
             [NSObject cancelPreviousPerformRequestsWithTarget:self

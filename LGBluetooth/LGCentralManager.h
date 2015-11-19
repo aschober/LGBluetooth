@@ -1,7 +1,7 @@
 // The MIT License (MIT)
 //
 // Created by : l0gg3r
-// Copyright (c) 2014 SocialObjects Software. All rights reserved.
+// Copyright (c) 2014 l0gg3r. All rights reserved.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy of
 // this software and associated documentation files (the "Software"), to deal in
@@ -27,6 +27,7 @@
 
 typedef void (^LGCentralManagerStartCallback) (NSError *error);
 typedef void (^LGCentralManagerDiscoverPeripheralsAfterIntervalCallback) (NSArray *peripherals, NSError *error);
+typedef void (^LGCentralManagerDiscoverPeripheralsChangesCallback) (LGPeripheral *peripheral);
 typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peripheral, NSError *error);
 
 /**
@@ -74,6 +75,15 @@ typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peri
 
 + (NSSet *)keyPathsForValuesAffectingCentralNotReadyReason;
 
+
+/**
+ * Scans for nearby peripherals
+ * and fills the - NSArray *peripherals
+ * @param aChangesCallback block which will be called on each peripheral update
+ */
+- (void)scanForPeripheralsWithChanges:(LGCentralManagerDiscoverPeripheralsChangesCallback)aChangesCallback;
+
+
 /**
  * Start central manager. Returns error if not CBCentralManagerStatePoweredOn
  */
@@ -84,6 +94,7 @@ typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peri
  * and fills the - NSArray *peripherals
  */
 - (void)scanForPeripherals;
+
 
 /**
  * Makes scan for peripherals with criterias,
@@ -108,6 +119,19 @@ typedef void (^LGCentralManagerDiscoveredPeripheralCallback) (LGPeripheral *peri
 - (void)scanForPeripheralsWithServices:(NSArray *)serviceUUIDs
                                options:(NSDictionary *)options
                       discoveredDevice:(LGCentralManagerDiscoveredPeripheralCallback)aCallback;
+
+/**
+ * Scans for nearby peripherals
+ * and fills the - NSArray *peripherals.
+ * Scan will be stoped after input interaval.
+ * @param aScanInterval interval by which scan will be stoped
+ * @param aChangesCallback block which will be called on each peripheral update
+ * @param aCallback completion block will be called after
+ * <i>aScanInterval</i> with nearby peripherals
+ */
+- (void)scanForPeripheralsByInterval:(NSUInteger)aScanInterval
+                             changes:(LGCentralManagerDiscoverPeripheralsChangesCallback)aChangesCallback
+                          completion:(LGCentralManagerDiscoverPeripheralsAfterIntervalCallback)aCallback;
 
 /**
  * Scans for nearby peripherals
