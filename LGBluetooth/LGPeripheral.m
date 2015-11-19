@@ -65,22 +65,12 @@ NSString * const kConnectionMissingErrorMessage = @"BLE Device is not connected"
 
 - (BOOL)isConnected
 {
-    // iOS 7 check
-    if([CBPeripheral instancesRespondToSelector:@selector(state)]){
-        return (self.cbPeripheral.state == CBPeripheralStateConnected);
-    } else {
-        return self.cbPeripheral.isConnected;
-    }
+    return (self.cbPeripheral.state == CBPeripheralStateConnected);
 }
 
 - (NSString *)UUIDString
 {
-    // iOS 7 check
-    if([CBPeripheral instancesRespondToSelector:@selector(identifier)]){
-        return [self.cbPeripheral.identifier UUIDString];
-    } else {
-        return CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, self.cbPeripheral.UUID));
-    }
+    return [self.cbPeripheral.identifier UUIDString];
 }
 
 - (NSString *)name
